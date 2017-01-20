@@ -120,7 +120,7 @@ var Game = React.createClass({
     },
     render: function(){
         return (
-            <svg width="500" height="500">
+            <svg width="500" height="450">
                 <PlayArea blocks={this.state.blocks} piece={this.state.piece} />
             </svg>
         );
