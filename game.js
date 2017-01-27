@@ -49,7 +49,6 @@ var Game = React.createClass({
             this.lowerPiece();
     },
     blinkExpire: function() {
-        console.log('blinkExpire');
         var mode = this.state.mode;
         var blinkCount = mode[1];
         var completeRows = mode[2];
@@ -75,15 +74,11 @@ var Game = React.createClass({
         }
     },
     clearCompleteRows: function() {
-        console.log('clearCompleteRows()');
-        
         var completeRows = this.state.mode[2];
         if (completeRows.length == 0)
             return;
 
         var stackHeight = this.getStackHeight();
-        console.log('stack height', stackHeight);
-        
 
         var shiftCount = 0;
 
@@ -107,7 +102,7 @@ var Game = React.createClass({
     getStackHeight: function() {
         var result = 0;
         var blocks = this.state.blocks;
-        console.log(blocks);
+
         for (var row = 0; row < gridHeight; row++) {
             for (var col = 0; col < gridWidth; col++) {
                 if (blocks[row][col] != null) {
@@ -128,12 +123,10 @@ var Game = React.createClass({
     putPiece: function() {
         clearInterval(this.timer);
 
-        console.log('putPiece()');
-
         this.mergePiece();
             
         completeRows = this.getCompleteRows(); 
-        //console.log(completeRows.length);
+
         if(completeRows.length > 0) {
             mode = [1, 0, completeRows]; //1 for elimination mode
             this.setState({
@@ -149,7 +142,6 @@ var Game = React.createClass({
         }
     },
     mergePiece: function() {
-        console.log('mergePiece()');
         var piece = this.state.piece;
         var blocks = this.state.blocks;
         for(var i = 0; i < piece.blocks.length; i++) {
@@ -159,7 +151,6 @@ var Game = React.createClass({
         this.setState({blocks: blocks});
     },
     changePiece: function() {
-        console.log('changePiece()');
         this.setState({piece: this.makeIntoPlayPiece(this.state.next), next: this.makeRandomPiece()})
     },
     initField: function() {
@@ -324,8 +315,6 @@ var Game = React.createClass({
         return 0;
     },
     onKeydown:function(event) {
-        //console.log('onKeydown()');
-        //console.log(event);
         if(this.paused && event.which != 80)
             return;
 
@@ -354,7 +343,7 @@ var Game = React.createClass({
         var piece = this.state.piece;
 
         for(var i = 0; i < piece.blocks.length; i++) {
-            if(piece.blocks[i].col == 0 || blocks[piece.blocks[i].row][piece.blocks[i].col - 1] != null) {
+            if (piece.blocks[i].col == 0 || (piece.blocks[i].row < gridHeight && blocks[piece.blocks[i].row][piece.blocks[i].col - 1] != null)) {
                 move = false;
                 break;
             }
@@ -372,7 +361,7 @@ var Game = React.createClass({
         var piece = this.state.piece;
 
         for(var i = 0; i < piece.blocks.length; i++) {
-            if(piece.blocks[i].col == gridWidth - 1 || blocks[piece.blocks[i].row][piece.blocks[i].col + 1] != null) {
+            if(piece.blocks[i].col == gridWidth - 1 || (piece.blocks[i].row < gridHeight && blocks[piece.blocks[i].row][piece.blocks[i].col + 1] != null)) {
                 move = false;
                 break;
             }
@@ -389,7 +378,7 @@ var Game = React.createClass({
         var piece = this.state.piece;
         
         for(var i = 0; i < piece.blocks.length; i++) {
-            if(piece.blocks[i].row == 0 || blocks[piece.blocks[i].row - 1][piece.blocks[i].col] != null) {
+            if(piece.blocks[i].row == 0 || (piece.blocks[i].row <= gridHeight && blocks[piece.blocks[i].row - 1][piece.blocks[i].col] != null)) {
                 this.putPiece();
                 return;
             }
@@ -419,18 +408,14 @@ var Game = React.createClass({
         var piece = this.state.piece;
         var copy = this.copyPiece(piece);
 
-        //console.log(copy);
-
         copy = this.rotate(copy);
         canRot = true;
-
-        //console.log(copy);
 
         for(var i = 0; i < copy.blocks.length; i++) {
             if(
                 copy.blocks[i].col < 0 || copy.blocks[i].col >= gridWidth ||
-                copy.blocks[i].row < 0 || copy.blocks[i].row >= gridHeight ||
-                blocks[copy.blocks[i].row][copy.blocks[i].col] != null
+                copy.blocks[i].row < 0 ||
+                (copy.blocks[i].row < gridHeight && blocks[copy.blocks[i].row][copy.blocks[i].col] != null)
             )
             {
                 canRot = false;
@@ -626,8 +611,6 @@ var PlayAreaBorder = React.createClass({
 var PlayAreaBlocks = React.createClass({
     render: function() {
         var blocks = this.makeBlocksToRender();
-        //console.log('PlayAreaBlocks.render()');
-        //console.log(blocks);
         return <g>{blocks}</g>
     },
     makeBlocksToRender: function() {
@@ -647,9 +630,6 @@ var PlayAreaBlocks = React.createClass({
                     else {
                         var blinkCount = mode[1]
                         var completeRows = mode[2];
-
-                        //console.log('blinkCount', blinkCount);
-                        //console.log(completeRows, completeRows.indexOf(row));
 
                         // If blink count is {1, 3, 5, ...} or row is not completed
                         // show the row. Else hide the row.
@@ -682,7 +662,6 @@ var NextPieceArea = React.createClass({
  */
 var Piece = React.createClass({
     getInitialState: function() {
-        //console.log(this.props.piece);
         return {piece: this.props.piece};
     },
     render: function() {
