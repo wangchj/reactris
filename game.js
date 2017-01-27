@@ -4,6 +4,8 @@ const gridHeight = 20; //Number of blocks vertically
 const playAreaXOffset = 20;
 const playAreaYOffset = 20;
 
+const blinkDelay = 100; // The time between blinks in ms
+const blinkLimit = 2;   //Number of blinks
 //Piece types
 const pieceType = {
     st: 0, z:1, rz:2, s:3, l:4, rl:5, r:6
@@ -28,15 +30,14 @@ var Game = React.createClass({
         this.timer = setInterval(this.delayExpire, this.state.delay);
     },
     delayExpire: function() {
-        //clearInterval(this.timer);
-        //console.log('delayExpire');
-        //console.log(this.state.blocks.toString());
         var piece = this.state.piece;
         var put = false;
 
         for(var i = 0; i < piece.blocks.length; i++) {
-            if(piece.blocks[i].y == 0 ||
-                this.state.blocks[piece.blocks[i].x][piece.blocks[i].y - 1] != null) {
+            if(piece.blocks[i].row == 0 || 
+                (piece.blocks[i].row < gridHeight && 
+                this.state.blocks[piece.blocks[i].row - 1][piece.blocks[i].col] != null))
+            {
                 put = true;
                 break;
             }
@@ -49,11 +50,78 @@ var Game = React.createClass({
     },
     blinkExpire: function() {
         console.log('blinkExpire');
+        var mode = this.state.mode;
+        var blinkCount = mode[1];
+        var completeRows = mode[2];
+
+        if (blinkCount >= blinkLimit) {
+            clearInterval(this.blinkTimer);
+
+            // TODO: update score
+
+            this.clearCompleteRows();
+
+            this.setState({
+                blocks: this.state.blocks,
+                piece: this.makeIntoPlayPiece(this.state.next),
+                next: this.makeRandomPiece(),
+                mode: 0
+            });
+            
+            this.timer = setInterval(this.delayExpire, this.state.delay);
+        }
+        else {
+            this.setState({mode:[1, blinkCount + 1, completeRows]})
+        }
+    },
+    clearCompleteRows: function() {
+        console.log('clearCompleteRows()');
+        
+        var completeRows = this.state.mode[2];
+        if (completeRows.length == 0)
+            return;
+
+        var stackHeight = this.getStackHeight();
+        console.log('stack height', stackHeight);
+        
+
+        var shiftCount = 0;
+
+        for (var row = 0; row < stackHeight; row++) {
+            if (shiftCount < completeRows.length && completeRows[shiftCount] == row)
+                shiftCount++;
+            else if (shiftCount != 0) {
+                for (var col = 0; col < gridWidth; col++)
+                    this.state.blocks[row - shiftCount][col] = this.state.blocks[row][col];
+            }
+
+            if (row >= stackHeight - completeRows.length) {
+                for (var col = 0; col < gridWidth; col++)
+                    this.state.blocks[row][col] = null;
+            }
+        }
+
+        //this.setState({blocks:this.state.blocks});
+
+    },
+    getStackHeight: function() {
+        var result = 0;
+        var blocks = this.state.blocks;
+        console.log(blocks);
+        for (var row = 0; row < gridHeight; row++) {
+            for (var col = 0; col < gridWidth; col++) {
+                if (blocks[row][col] != null) {
+                    result++;
+                    break;
+                }
+            }
+        }
+        return result;
     },
     lowerPiece: function() {
         var piece = this.state.piece;
         for(var i = 0; i < piece.blocks.length; i++)
-            piece.blocks[i].y--;
+            piece.blocks[i].row--;
         this.setState({piece: piece});
         //this.timer = setInterval(this.delayExpire, this.state.delay); 
     },
@@ -65,11 +133,15 @@ var Game = React.createClass({
         this.mergePiece();
             
         completeRows = this.getCompleteRows(); 
-        console.log(completeRows.length);
+        //console.log(completeRows.length);
         if(completeRows.length > 0) {
             mode = [1, 0, completeRows]; //1 for elimination mode
-            this.setState({mode: mode, score: this.state.score + completeRows.length});
-            this.blinkTime = setInterval(this.blinkExpire, 1000);
+            this.setState({
+                piece: null,
+                mode: mode,
+                score: this.state.score + completeRows.length
+            });
+            this.blinkTimer = setInterval(this.blinkExpire, blinkDelay);
         }
         else {
             this.changePiece();
@@ -82,7 +154,7 @@ var Game = React.createClass({
         var blocks = this.state.blocks;
         for(var i = 0; i < piece.blocks.length; i++) {
             var b = piece.blocks[i];
-            blocks[b.x][b.y] = b;
+            blocks[b.row][b.col] = true;
         }
         this.setState({blocks: blocks});
     },
@@ -107,7 +179,7 @@ var Game = React.createClass({
         for(var row = 0; row < gridHeight; row++) {
             var addRow = true;
             for(var col = 0; col < gridWidth; col++) {
-                if(this.state.blocks[col][row] == null) {
+                if(this.state.blocks[row][col] == null) {
                     addRow = false;
                     break;
                 }
@@ -120,15 +192,15 @@ var Game = React.createClass({
     },
     render: function(){
         return (
-            <svg width="500" height="450">
-                <PlayArea blocks={this.state.blocks} piece={this.state.piece} />
+            <svg width="300" height="450">
+                <PlayArea blocks={this.state.blocks} piece={this.state.piece} mode={this.state.mode}/>
             </svg>
         );
     },
     makeIntoPlayPiece: function(piece) {
         for(var i = 0; i < piece.blocks.length; i++) {
-            piece.blocks[i].x += Math.floor(gridWidth / 2) - 1;
-            piece.blocks[i].y += gridHeight;
+            piece.blocks[i].col += Math.floor(gridWidth / 2) - 1;
+            piece.blocks[i].row += gridHeight;
         }
         return piece;
     },
@@ -145,10 +217,10 @@ var Game = React.createClass({
                     count: this.pcount,
                     phase: 0,
                     blocks: [
-                        {x:0, y:0, visible:true},
-                        {x:1, y:0, visible:true},
-                        {x:2, y:0, visible:true},
-                        {x:3, y:0, visible:true}
+                        {row:0, col:0},
+                        {row:0, col:1},
+                        {row:0, col:2},
+                        {row:0, col:3}
                     ]
                 };
             case pieceType.z:  //Z piece
@@ -157,10 +229,10 @@ var Game = React.createClass({
                     count: this.pcount,
                     phase: 0,
                     blocks: [
-                        {x:0, y:1, visible:true},
-                        {x:1, y:1, visible:true},
-                        {x:1, y:0, visible:true},
-                        {x:2, y:0, visible:true}
+                        {row:1, col:0},
+                        {row:1, col:1},
+                        {row:0, col:1},
+                        {row:0, col:2}
                     ]
                 };
             case pieceType.rz: //Reverse Z piece
@@ -169,10 +241,10 @@ var Game = React.createClass({
                     count: this.pcount,
                     phase: 0,
                     blocks: [
-                        {x:1, y:1, visible:true},
-                        {x:2, y:1, visible:true},
-                        {x:0, y:0, visible:true},
-                        {x:1, y:0, visible:true}
+                        {row:1, col:1},
+                        {row:1, col:2},
+                        {row:0, col:0},
+                        {row:0, col:1}
                     ]
                 };
             case pieceType.s:  //Square piece
@@ -181,10 +253,10 @@ var Game = React.createClass({
                     count: this.pcount,
                     phase: 0,
                     blocks: [
-                        {x:0, y:1, visible:true},
-                        {x:1, y:1, visible:true},
-                        {x:0, y:0, visible:true},
-                        {x:1, y:0, visible:true}
+                        {row:1, col:0},
+                        {row:1, col:1},
+                        {row:0, col:0},
+                        {row:0, col:1}
                     ]
                 };
             case pieceType.l:  //L piece
@@ -193,10 +265,10 @@ var Game = React.createClass({
                     count: this.pcount,
                     phase: 0,
                     blocks: [
-                        {x:0, y:2, visible:true},
-                        {x:0, y:1, visible:true},
-                        {x:0, y:0, visible:true},
-                        {x:1, y:0, visible:true}
+                        {row:2, col:0},
+                        {row:1, col:0},
+                        {row:0, col:0},
+                        {row:0, col:1}
                     ]
                 };
             case pieceType.rl: //Reverse L piece
@@ -205,10 +277,10 @@ var Game = React.createClass({
                     count: this.pcount,
                     phase: 0,
                     blocks: [
-                        {x:1, y:2, visible:true},
-                        {x:1, y:1, visible:true},
-                        {x:0, y:0, visible:true},
-                        {x:1, y:0, visible:true}
+                        {row:2, col:1},
+                        {row:1, col:1},
+                        {row:0, col:0},
+                        {row:0, col:1}
                     ]
                 };
             case pieceType.r:  //Right angle piece
@@ -217,10 +289,10 @@ var Game = React.createClass({
                     count: this.pcount,
                     phase: 0,
                     blocks: [
-                        {x:1, y:1, visible:true},
-                        {x:0, y:0, visible:true},
-                        {x:1, y:0, visible:true},
-                        {x:2, y:0, visible:true}
+                        {row:1, col:1},
+                        {row:0, col:0},
+                        {row:0, col:1},
+                        {row:0, col:2}
                     ]
                 };
         }
@@ -232,9 +304,8 @@ var Game = React.createClass({
         var blocks = [];
         for(var i = 0; i < piece.blocks.length; i++) {
             blocks.push({
-                x: piece.blocks[i].x,
-                y: piece.blocks[i].y,
-                visible: piece.blocks[i].visible
+                row: piece.blocks[i].row,
+                col: piece.blocks[i].col
             });
         }
 
@@ -247,7 +318,7 @@ var Game = React.createClass({
     },
     colHeight: function(colNum) {
         for(var i = gridHeight; i > 0; i--) {
-            if(this.state.blocks[colNum][i - 1] != null)
+            if(this.state.blocks[i - 1][colNum] != null)
                 return i;
         }
         return 0;
@@ -283,7 +354,7 @@ var Game = React.createClass({
         var piece = this.state.piece;
 
         for(var i = 0; i < piece.blocks.length; i++) {
-            if(piece.blocks[i].x == 0 || blocks[piece.blocks[i].x - 1][piece.blocks[i].y] != null) {
+            if(piece.blocks[i].col == 0 || blocks[piece.blocks[i].row][piece.blocks[i].col - 1] != null) {
                 move = false;
                 break;
             }
@@ -291,7 +362,7 @@ var Game = React.createClass({
 
         if(move) {
             for(var i = 0; i < piece.blocks.length; i++)
-                piece.blocks[i].x--;
+                piece.blocks[i].col--;
             this.setState({piece: piece});
         }
     },
@@ -301,7 +372,7 @@ var Game = React.createClass({
         var piece = this.state.piece;
 
         for(var i = 0; i < piece.blocks.length; i++) {
-            if(piece.blocks[i].x == gridWidth - 1 || blocks[piece.blocks[i].x + 1][piece.blocks[i].y] != null) {
+            if(piece.blocks[i].col == gridWidth - 1 || blocks[piece.blocks[i].row][piece.blocks[i].col + 1] != null) {
                 move = false;
                 break;
             }
@@ -309,7 +380,7 @@ var Game = React.createClass({
 
         if(move) {
             for(var i = 0; i < piece.blocks.length; i++)
-                piece.blocks[i].x++;
+                piece.blocks[i].col++;
             this.setState({piece: piece});
         }
     },
@@ -318,7 +389,7 @@ var Game = React.createClass({
         var piece = this.state.piece;
         
         for(var i = 0; i < piece.blocks.length; i++) {
-            if(piece.blocks[i].y == 0 || blocks[piece.blocks[i].x][piece.blocks[i].y - 1] != null) {
+            if(piece.blocks[i].row == 0 || blocks[piece.blocks[i].row - 1][piece.blocks[i].col] != null) {
                 this.putPiece();
                 return;
             }
@@ -331,15 +402,15 @@ var Game = React.createClass({
         var piece = this.state.piece;
         var min = gridHeight + 1;
         for(var i = 0; i < piece.blocks.length; i++) {
-            var colHeight = this.colHeight(piece.blocks[i].x);
-            var d = piece.blocks[i].y - colHeight;
+            var colHeight = this.colHeight(piece.blocks[i].col);
+            var d = piece.blocks[i].row - colHeight;
             if(d < min)
                 min = d;
         }
 
         if(min > 0)
             for(var i = 0; i < piece.blocks.length; i++)
-                piece.blocks[i].y -= min;
+                piece.blocks[i].row -= min;
 
         this.putPiece();
     },
@@ -357,9 +428,9 @@ var Game = React.createClass({
 
         for(var i = 0; i < copy.blocks.length; i++) {
             if(
-                copy.blocks[i].x < 0 || copy.blocks[i].x >= gridWidth ||
-                copy.blocks[i].y < 0 || copy.blocks[i].y >= gridHeight ||
-                blocks[copy.blocks[i].x][copy.blocks[i].y] != null
+                copy.blocks[i].col < 0 || copy.blocks[i].col >= gridWidth ||
+                copy.blocks[i].row < 0 || copy.blocks[i].row >= gridHeight ||
+                blocks[copy.blocks[i].row][copy.blocks[i].col] != null
             )
             {
                 canRot = false;
@@ -376,44 +447,44 @@ var Game = React.createClass({
     rotate: function(piece) {
         switch(piece.type) {
             case pieceType.st: //Straight piece
-                if(piece.phase == 0) {
-                    piece.blocks[0].x = piece.blocks[1].x; piece.blocks[0].y = piece.blocks[1].y + 1;
-                    piece.blocks[2].x = piece.blocks[1].x; piece.blocks[2].y = piece.blocks[1].y - 1;
-                    piece.blocks[3].x = piece.blocks[1].x; piece.blocks[3].y = piece.blocks[1].y - 2;
+                if(piece.phase == 0) { // Phase 0: horizontal
+                    piece.blocks[0].col = piece.blocks[1].col; piece.blocks[0].row = piece.blocks[1].row + 1;
+                    piece.blocks[2].col = piece.blocks[1].col; piece.blocks[2].row = piece.blocks[1].row - 1;
+                    piece.blocks[3].col = piece.blocks[1].col; piece.blocks[3].row = piece.blocks[1].row - 2;
                     piece.phase = 1;
                 }
-                else {
-                    piece.blocks[0].x = piece.blocks[1].x - 1; piece.blocks[0].y = piece.blocks[1].y;
-                    piece.blocks[2].x = piece.blocks[1].x + 1; piece.blocks[2].y = piece.blocks[1].y;
-                    piece.blocks[3].x = piece.blocks[1].x + 2; piece.blocks[3].y = piece.blocks[1].y;
+                else { // Phase 1: vertical
+                    piece.blocks[0].col = piece.blocks[1].col - 1; piece.blocks[0].row = piece.blocks[1].row;
+                    piece.blocks[2].col = piece.blocks[1].col + 1; piece.blocks[2].row = piece.blocks[1].row;
+                    piece.blocks[3].col = piece.blocks[1].col + 2; piece.blocks[3].row = piece.blocks[1].row;
                     piece.phase = 0;
                 }
                 break;
             case pieceType.z:  //Z piece
                 if(piece.phase == 0) {
-                    piece.blocks[0].x = piece.blocks[2].x + 1; piece.blocks[0].y = piece.blocks[2].y + 1;
-                    piece.blocks[1].x = piece.blocks[2].x + 1; piece.blocks[1].y = piece.blocks[2].y;
-                    piece.blocks[3].x = piece.blocks[2].x; piece.blocks[3].y = piece.blocks[2].y - 1;
+                    piece.blocks[0].col = piece.blocks[2].col + 1; piece.blocks[0].row = piece.blocks[2].row + 1;
+                    piece.blocks[1].col = piece.blocks[2].col + 1; piece.blocks[1].row = piece.blocks[2].row;
+                    piece.blocks[3].col = piece.blocks[2].col; piece.blocks[3].row = piece.blocks[2].row - 1;
                     piece.phase = 1;
                 }
                 else {
-                    piece.blocks[0].x = piece.blocks[2].x - 1; piece.blocks[0].y = piece.blocks[2].y + 1;
-                    piece.blocks[1].x = piece.blocks[2].x; piece.blocks[1].y = piece.blocks[2].y + 1;
-                    piece.blocks[3].x = piece.blocks[2].x + 1; piece.blocks[3].y = piece.blocks[2].y;
+                    piece.blocks[0].col = piece.blocks[2].col - 1; piece.blocks[0].row = piece.blocks[2].row + 1;
+                    piece.blocks[1].col = piece.blocks[2].col; piece.blocks[1].row = piece.blocks[2].row + 1;
+                    piece.blocks[3].col = piece.blocks[2].col + 1; piece.blocks[3].row = piece.blocks[2].row;
                     piece.phase = 0;
                 }
                 break;
             case pieceType.rz: //Reverse Z piece
                 if(piece.phase == 0) {
-                    piece.blocks[0].x = piece.blocks[3].x - 1; piece.blocks[0].y = piece.blocks[3].y;
-                    piece.blocks[1].x = piece.blocks[3].x - 1; piece.blocks[1].y = piece.blocks[3].y + 1;
-                    piece.blocks[2].x = piece.blocks[3].x; piece.blocks[2].y = piece.blocks[3].y - 1;
+                    piece.blocks[0].col = piece.blocks[3].col - 1; piece.blocks[0].row = piece.blocks[3].row;
+                    piece.blocks[1].col = piece.blocks[3].col - 1; piece.blocks[1].row = piece.blocks[3].row + 1;
+                    piece.blocks[2].col = piece.blocks[3].col; piece.blocks[2].row = piece.blocks[3].row - 1;
                     piece.phase = 1;
                 }
                 else {
-                    piece.blocks[0].x = piece.blocks[3].x; piece.blocks[0].y = piece.blocks[3].y + 1;
-                    piece.blocks[1].x = piece.blocks[3].x + 1; piece.blocks[1].y = piece.blocks[3].y + 1;
-                    piece.blocks[2].x = piece.blocks[3].x - 1; piece.blocks[2].y = piece.blocks[3].y;
+                    piece.blocks[0].col = piece.blocks[3].col; piece.blocks[0].row = piece.blocks[3].row + 1;
+                    piece.blocks[1].col = piece.blocks[3].col + 1; piece.blocks[1].row = piece.blocks[3].row + 1;
+                    piece.blocks[2].col = piece.blocks[3].col - 1; piece.blocks[2].row = piece.blocks[3].row;
                     piece.phase = 0;
                 }
                 break;
@@ -421,79 +492,79 @@ var Game = React.createClass({
                 break;
             case pieceType.l:  //L piece
                 if(piece.phase == 0) {
-                    piece.blocks[0].x = piece.blocks[1].x + 1; piece.blocks[0].y = piece.blocks[1].y;
-                    piece.blocks[2].x = piece.blocks[1].x - 1; piece.blocks[2].y = piece.blocks[1].y;
-                    piece.blocks[3].x = piece.blocks[1].x - 1; piece.blocks[3].y = piece.blocks[1].y - 1;
+                    piece.blocks[0].col = piece.blocks[1].col + 1; piece.blocks[0].row = piece.blocks[1].row;
+                    piece.blocks[2].col = piece.blocks[1].col - 1; piece.blocks[2].row = piece.blocks[1].row;
+                    piece.blocks[3].col = piece.blocks[1].col - 1; piece.blocks[3].row = piece.blocks[1].row - 1;
                     piece.phase = 1;
                 }
                 else if(piece.phase == 1) {
-                    piece.blocks[0].x = piece.blocks[1].x; piece.blocks[0].y = piece.blocks[1].y - 1;
-                    piece.blocks[2].x = piece.blocks[1].x; piece.blocks[2].y = piece.blocks[1].y + 1;
-                    piece.blocks[3].x = piece.blocks[1].x - 1; piece.blocks[3].y = piece.blocks[1].y + 1;
+                    piece.blocks[0].col = piece.blocks[1].col; piece.blocks[0].row = piece.blocks[1].row - 1;
+                    piece.blocks[2].col = piece.blocks[1].col; piece.blocks[2].row = piece.blocks[1].row + 1;
+                    piece.blocks[3].col = piece.blocks[1].col - 1; piece.blocks[3].row = piece.blocks[1].row + 1;
                     piece.phase = 2;
                 }
                 else if(piece.phase == 2) {
-                    piece.blocks[0].x = piece.blocks[1].x - 1; piece.blocks[0].y = piece.blocks[1].y;
-                    piece.blocks[2].x = piece.blocks[1].x + 1; piece.blocks[2].y = piece.blocks[1].y;
-                    piece.blocks[3].x = piece.blocks[1].x + 1; piece.blocks[3].y = piece.blocks[1].y + 1;
+                    piece.blocks[0].col = piece.blocks[1].col - 1; piece.blocks[0].row = piece.blocks[1].row;
+                    piece.blocks[2].col = piece.blocks[1].col + 1; piece.blocks[2].row = piece.blocks[1].row;
+                    piece.blocks[3].col = piece.blocks[1].col + 1; piece.blocks[3].row = piece.blocks[1].row + 1;
                     piece.phase = 3;
                 }
                 else {
-                    piece.blocks[0].x = piece.blocks[1].x; piece.blocks[0].y = piece.blocks[1].y + 1;
-                    piece.blocks[2].x = piece.blocks[1].x; piece.blocks[2].y = piece.blocks[1].y - 1;
-                    piece.blocks[3].x = piece.blocks[1].x + 1; piece.blocks[3].y = piece.blocks[1].y - 1;
+                    piece.blocks[0].col = piece.blocks[1].col; piece.blocks[0].row = piece.blocks[1].row + 1;
+                    piece.blocks[2].col = piece.blocks[1].col; piece.blocks[2].row = piece.blocks[1].row - 1;
+                    piece.blocks[3].col = piece.blocks[1].col + 1; piece.blocks[3].row = piece.blocks[1].row - 1;
                     piece.phase = 0;
                 }
                 break;
             case pieceType.rl: //Reverse L piece
                 if(piece.phase == 0) {
-                    piece.blocks[0].x = piece.blocks[1].x + 1; piece.blocks[0].y = piece.blocks[1].y;
-                    piece.blocks[2].x = piece.blocks[1].x - 1; piece.blocks[2].y = piece.blocks[1].y;
-                    piece.blocks[3].x = piece.blocks[1].x - 1; piece.blocks[3].y = piece.blocks[1].y + 1;
+                    piece.blocks[0].col = piece.blocks[1].col + 1; piece.blocks[0].row = piece.blocks[1].row;
+                    piece.blocks[2].col = piece.blocks[1].col - 1; piece.blocks[2].row = piece.blocks[1].row;
+                    piece.blocks[3].col = piece.blocks[1].col - 1; piece.blocks[3].row = piece.blocks[1].row + 1;
                     piece.phase = 1;
                 }
                 else if(piece.phase == 1) {
-                    piece.blocks[0].x = piece.blocks[1].x; piece.blocks[0].y = piece.blocks[1].y - 1;
-                    piece.blocks[2].x = piece.blocks[1].x; piece.blocks[2].y = piece.blocks[1].y + 1;
-                    piece.blocks[3].x = piece.blocks[1].x + 1; piece.blocks[3].y = piece.blocks[1].y + 1;
+                    piece.blocks[0].col = piece.blocks[1].col; piece.blocks[0].row = piece.blocks[1].row - 1;
+                    piece.blocks[2].col = piece.blocks[1].col; piece.blocks[2].row = piece.blocks[1].row + 1;
+                    piece.blocks[3].col = piece.blocks[1].col + 1; piece.blocks[3].row = piece.blocks[1].row + 1;
                     piece.phase = 2;
                 }
                 else if(piece.phase == 2) {
-                    piece.blocks[0].x = piece.blocks[1].x - 1; piece.blocks[0].y = piece.blocks[1].y;
-                    piece.blocks[2].x = piece.blocks[1].x + 1; piece.blocks[2].y = piece.blocks[1].y;
-                    piece.blocks[3].x = piece.blocks[1].x + 1; piece.blocks[3].y = piece.blocks[1].y - 1;
+                    piece.blocks[0].col = piece.blocks[1].col - 1; piece.blocks[0].row = piece.blocks[1].row;
+                    piece.blocks[2].col = piece.blocks[1].col + 1; piece.blocks[2].row = piece.blocks[1].row;
+                    piece.blocks[3].col = piece.blocks[1].col + 1; piece.blocks[3].row = piece.blocks[1].row - 1;
                     piece.phase = 3;
                 }
                 else {
-                    piece.blocks[0].x = piece.blocks[1].x; piece.blocks[0].y = piece.blocks[1].y + 1;
-                    piece.blocks[2].x = piece.blocks[1].x; piece.blocks[2].y = piece.blocks[1].y - 1;
-                    piece.blocks[3].x = piece.blocks[1].x - 1; piece.blocks[3].y = piece.blocks[1].y - 1;
+                    piece.blocks[0].col = piece.blocks[1].col; piece.blocks[0].row = piece.blocks[1].row + 1;
+                    piece.blocks[2].col = piece.blocks[1].col; piece.blocks[2].row = piece.blocks[1].row - 1;
+                    piece.blocks[3].col = piece.blocks[1].col - 1; piece.blocks[3].row = piece.blocks[1].row - 1;
                     piece.phase = 0;
                 }
                 break;
             case pieceType.r:  //Right angle piece
                 if(piece.phase == 0) {
-                    piece.blocks[0].x = piece.blocks[2].x + 1; piece.blocks[0].y = piece.blocks[2].y;
-                    piece.blocks[1].x = piece.blocks[2].x; piece.blocks[1].y = piece.blocks[2].y + 1;
-                    piece.blocks[3].x = piece.blocks[2].x; piece.blocks[3].y = piece.blocks[2].y - 1;
+                    piece.blocks[0].col = piece.blocks[2].col + 1; piece.blocks[0].row = piece.blocks[2].row;
+                    piece.blocks[1].col = piece.blocks[2].col; piece.blocks[1].row = piece.blocks[2].row + 1;
+                    piece.blocks[3].col = piece.blocks[2].col; piece.blocks[3].row = piece.blocks[2].row - 1;
                     piece.phase = 1;
                 }
                 else if(piece.phase == 1) {
-                    piece.blocks[0].x = piece.blocks[2].x; piece.blocks[0].y = piece.blocks[2].y - 1;
-                    piece.blocks[1].x = piece.blocks[2].x + 1; piece.blocks[1].y = piece.blocks[2].y;
-                    piece.blocks[3].x = piece.blocks[2].x - 1; piece.blocks[3].y = piece.blocks[2].y;
+                    piece.blocks[0].col = piece.blocks[2].col; piece.blocks[0].row = piece.blocks[2].row - 1;
+                    piece.blocks[1].col = piece.blocks[2].col + 1; piece.blocks[1].row = piece.blocks[2].row;
+                    piece.blocks[3].col = piece.blocks[2].col - 1; piece.blocks[3].row = piece.blocks[2].row;
                     piece.phase = 2;
                 }
                 else if(piece.phase == 2) {
-                    piece.blocks[0].x = piece.blocks[2].x - 1; piece.blocks[0].y = piece.blocks[2].y;
-                    piece.blocks[1].x = piece.blocks[2].x; piece.blocks[1].y = piece.blocks[2].y - 1;
-                    piece.blocks[3].x = piece.blocks[2].x; piece.blocks[3].y = piece.blocks[2].y + 1;
+                    piece.blocks[0].col = piece.blocks[2].col - 1; piece.blocks[0].row = piece.blocks[2].row;
+                    piece.blocks[1].col = piece.blocks[2].col; piece.blocks[1].row = piece.blocks[2].row - 1;
+                    piece.blocks[3].col = piece.blocks[2].col; piece.blocks[3].row = piece.blocks[2].row + 1;
                     piece.phase = 3;
                 }
                 else {
-                    piece.blocks[0].x = piece.blocks[2].x; piece.blocks[0].y = piece.blocks[2].y + 1;
-                    piece.blocks[1].x = piece.blocks[2].x - 1; piece.blocks[1].y = piece.blocks[2].y;
-                    piece.blocks[3].x = piece.blocks[2].x + 1; piece.blocks[3].y = piece.blocks[2].y;
+                    piece.blocks[0].col = piece.blocks[2].col; piece.blocks[0].row = piece.blocks[2].row + 1;
+                    piece.blocks[1].col = piece.blocks[2].col - 1; piece.blocks[1].row = piece.blocks[2].row;
+                    piece.blocks[3].col = piece.blocks[2].col + 1; piece.blocks[3].row = piece.blocks[2].row;
                     piece.phase = 0;
                 }
         }
@@ -513,8 +584,12 @@ var PlayArea = React.createClass({
     render: function() {
         return (
             <g>
-                <PlayAreaBlocks blocks={this.props.blocks} />
-                <Piece key={this.props.piece.count} piece={this.props.piece} />
+                <PlayAreaBlocks blocks={this.props.blocks} mode={this.props.mode}/>
+                {
+                    this.props.piece ? 
+                    <Piece key={this.props.piece.count} piece={this.props.piece} /> : 
+                    null
+                }
                 <PlayAreaBorder />
             </g>
         );
@@ -557,12 +632,32 @@ var PlayAreaBlocks = React.createClass({
     },
     makeBlocksToRender: function() {
         var blocks = [];
+        var mode = this.props.mode;
+
         for(var row = 0; row < gridHeight; row++) {
             for(var col = 0; col < gridWidth; col++) {
-                if(this.props.blocks[col][row] != null) {
-                    blocks.push(
-                        <Block key={col + ' ' + row} x={col} y={row} visible={this.props.blocks[col][row].visible} />
-                    );
+                if(this.props.blocks[row][col] != null) {
+                    
+                    // If mode is falling mode
+                    if (mode === 0)
+                        blocks.push(
+                            <Block key={row + ' ' + col} row={row} col={col} />
+                        );
+                    // Else, the mode is caneling mode
+                    else {
+                        var blinkCount = mode[1]
+                        var completeRows = mode[2];
+
+                        //console.log('blinkCount', blinkCount);
+                        //console.log(completeRows, completeRows.indexOf(row));
+
+                        // If blink count is {1, 3, 5, ...} or row is not completed
+                        // show the row. Else hide the row.
+                        if (blinkCount % 2 != 0 || !completeRows.includes(row))
+                            blocks.push(
+                                <Block key={row + ' ' + col} row={row} col={col} />
+                            );
+                    }
                 }
             }
         }
@@ -593,7 +688,7 @@ var Piece = React.createClass({
     render: function() {
         var blocks = this.state.piece.blocks.map(function(block, index){
             return (
-                <Block key={index} x={block.x} y={block.y} visible={block.visible} />
+                <Block key={index} row={block.row} col={block.col} />
             )
         });
         return (
@@ -605,17 +700,16 @@ var Piece = React.createClass({
 });
 
 /**
- * @prop x integer
- * @prop y integer
- * @prop visible boolean
+ * @prop row integer
+ * @prop col integer
  */
 var Block = React.createClass({
     render: function() {
-        if(this.props.visible && this.props.x >= 0 && this.props.x < gridWidth && this.props.y >=0 && this.props.y < gridHeight)
+        if(this.props.col >= 0 && this.props.col < gridWidth && this.props.row >= 0 && this.props.row < gridHeight)
             return (
                 <rect width={blockWidth} height={blockWidth} 
-                x={this.props.x * blockWidth + playAreaXOffset} 
-                y={(gridHeight - this.props.y - 1) * blockWidth + playAreaYOffset}
+                x={this.props.col * blockWidth + playAreaXOffset} 
+                y={(gridHeight - this.props.row - 1) * blockWidth + playAreaYOffset}
                 fill='#000' />
             );
         else
