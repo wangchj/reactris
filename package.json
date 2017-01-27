@@ -1,0 +1,22 @@
+{
+  "name": "tetres",
+  "version": "1.0.0",
+  "description": "A tetris game written in React.",
+  "main": "game.js",
+  "scripts": {
+    "start": "http-server . -a localhost -p 8000 -c-1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wangchj/tetres.git"
+  },
+  "author": "Jeff Wang",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/wangchj/tetres/issues"
+  },
+  "homepage": "https://github.com/wangchj/tetres#readme",
+  "devDependencies": {
+    "http-server": "^0.9.0"
+  }
+}
