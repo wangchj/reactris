@@ -6,20 +6,16 @@ const playAreaYOffset = 20;
 
 const blinkDelay = 100; // The time between blinks in ms
 const blinkLimit = 2;   //Number of blinks
-//Piece types
-const pieceType = {
-    st: 0, z:1, rz:2, s:3, l:4, rl:5, r:6
-};
+
 
 var Game = React.createClass({
     getInitialState: function() {
-        this.pcount = 0;
         this.paused = false;
 
         return {
             blocks: this.initField(),
-            piece: this.makeIntoPlayPiece(this.makeRandomPiece()),
-            next: this.makeRandomPiece(),
+            piece: this.makeIntoPlayPiece(new Piece()),
+            next: new Piece(),
             delay: 500,
             score: 0,
             mode: 0
@@ -63,7 +59,7 @@ var Game = React.createClass({
             this.setState({
                 blocks: this.state.blocks,
                 piece: this.makeIntoPlayPiece(this.state.next),
-                next: this.makeRandomPiece(),
+                next: new Piece(),
                 mode: 0
             });
             
@@ -151,7 +147,7 @@ var Game = React.createClass({
         this.setState({blocks: blocks});
     },
     changePiece: function() {
-        this.setState({piece: this.makeIntoPlayPiece(this.state.next), next: this.makeRandomPiece()})
+        this.setState({piece: this.makeIntoPlayPiece(this.state.next), next: new Piece()})
     },
     initField: function() {
         var rows = [];
@@ -194,118 +190,6 @@ var Game = React.createClass({
             piece.blocks[i].row += gridHeight;
         }
         return piece;
-    },
-    makeRandomPiece: function() {
-        return this.makePiece(Math.floor(Math.random() * 7));
-    },
-    makePiece: function(type) {
-        this.pcount++;
-
-        switch(type) {
-            case pieceType.st: //Straight piece
-                return {
-                    type: pieceType.st,
-                    count: this.pcount,
-                    phase: 0,
-                    blocks: [
-                        {row:0, col:0},
-                        {row:0, col:1},
-                        {row:0, col:2},
-                        {row:0, col:3}
-                    ]
-                };
-            case pieceType.z:  //Z piece
-                return {
-                    type: pieceType.z,
-                    count: this.pcount,
-                    phase: 0,
-                    blocks: [
-                        {row:1, col:0},
-                        {row:1, col:1},
-                        {row:0, col:1},
-                        {row:0, col:2}
-                    ]
-                };
-            case pieceType.rz: //Reverse Z piece
-                return {
-                    type: pieceType.rz,
-                    count: this.pcount,
-                    phase: 0,
-                    blocks: [
-                        {row:1, col:1},
-                        {row:1, col:2},
-                        {row:0, col:0},
-                        {row:0, col:1}
-                    ]
-                };
-            case pieceType.s:  //Square piece
-                return {
-                    type: pieceType.s,
-                    count: this.pcount,
-                    phase: 0,
-                    blocks: [
-                        {row:1, col:0},
-                        {row:1, col:1},
-                        {row:0, col:0},
-                        {row:0, col:1}
-                    ]
-                };
-            case pieceType.l:  //L piece
-                return {
-                    type: pieceType.l,
-                    count: this.pcount,
-                    phase: 0,
-                    blocks: [
-                        {row:2, col:0},
-                        {row:1, col:0},
-                        {row:0, col:0},
-                        {row:0, col:1}
-                    ]
-                };
-            case pieceType.rl: //Reverse L piece
-                return {
-                    type: pieceType.rl,
-                    count: this.pcount,
-                    phase: 0,
-                    blocks: [
-                        {row:2, col:1},
-                        {row:1, col:1},
-                        {row:0, col:0},
-                        {row:0, col:1}
-                    ]
-                };
-            case pieceType.r:  //Right angle piece
-                return {
-                    type: pieceType.r,
-                    count: this.pcount,
-                    phase: 0,
-                    blocks: [
-                        {row:1, col:1},
-                        {row:0, col:0},
-                        {row:0, col:1},
-                        {row:0, col:2}
-                    ]
-                };
-        }
-    },
-    /**
-     * Duplicates a piece.
-     */
-    copyPiece: function(piece) {
-        var blocks = [];
-        for(var i = 0; i < piece.blocks.length; i++) {
-            blocks.push({
-                row: piece.blocks[i].row,
-                col: piece.blocks[i].col
-            });
-        }
-
-        return {
-            type: piece.type,
-            count: piece.count,
-            phase: piece.phase,
-            blocks: blocks
-        };
     },
     colHeight: function(colNum) {
         for(var i = gridHeight; i > 0; i--) {
@@ -406,11 +290,13 @@ var Game = React.createClass({
     doRot: function() {
         var blocks = this.state.blocks;
         var piece = this.state.piece;
-        var copy = this.copyPiece(piece);
+        var copy = piece.copy();
+        var canRot = true;
 
-        copy = this.rotate(copy);
-        canRot = true;
+        // Rotate the copy
+        copy .rotate();
 
+        // Check each block of the copy to see the rotation is permitted
         for(var i = 0; i < copy.blocks.length; i++) {
             if(
                 copy.blocks[i].col < 0 || copy.blocks[i].col >= gridWidth ||
@@ -423,137 +309,12 @@ var Game = React.createClass({
             }
         }
 
+        // If rotate is permitted
         if(canRot) {
             piece.phase = copy.phase;
             piece.blocks = copy.blocks;
             this.setState({piece:piece});
         }
-    },
-    rotate: function(piece) {
-        switch(piece.type) {
-            case pieceType.st: //Straight piece
-                if(piece.phase == 0) { // Phase 0: horizontal
-                    piece.blocks[0].col = piece.blocks[1].col; piece.blocks[0].row = piece.blocks[1].row + 1;
-                    piece.blocks[2].col = piece.blocks[1].col; piece.blocks[2].row = piece.blocks[1].row - 1;
-                    piece.blocks[3].col = piece.blocks[1].col; piece.blocks[3].row = piece.blocks[1].row - 2;
-                    piece.phase = 1;
-                }
-                else { // Phase 1: vertical
-                    piece.blocks[0].col = piece.blocks[1].col - 1; piece.blocks[0].row = piece.blocks[1].row;
-                    piece.blocks[2].col = piece.blocks[1].col + 1; piece.blocks[2].row = piece.blocks[1].row;
-                    piece.blocks[3].col = piece.blocks[1].col + 2; piece.blocks[3].row = piece.blocks[1].row;
-                    piece.phase = 0;
-                }
-                break;
-            case pieceType.z:  //Z piece
-                if(piece.phase == 0) {
-                    piece.blocks[0].col = piece.blocks[2].col + 1; piece.blocks[0].row = piece.blocks[2].row + 1;
-                    piece.blocks[1].col = piece.blocks[2].col + 1; piece.blocks[1].row = piece.blocks[2].row;
-                    piece.blocks[3].col = piece.blocks[2].col; piece.blocks[3].row = piece.blocks[2].row - 1;
-                    piece.phase = 1;
-                }
-                else {
-                    piece.blocks[0].col = piece.blocks[2].col - 1; piece.blocks[0].row = piece.blocks[2].row + 1;
-                    piece.blocks[1].col = piece.blocks[2].col; piece.blocks[1].row = piece.blocks[2].row + 1;
-                    piece.blocks[3].col = piece.blocks[2].col + 1; piece.blocks[3].row = piece.blocks[2].row;
-                    piece.phase = 0;
-                }
-                break;
-            case pieceType.rz: //Reverse Z piece
-                if(piece.phase == 0) {
-                    piece.blocks[0].col = piece.blocks[3].col - 1; piece.blocks[0].row = piece.blocks[3].row;
-                    piece.blocks[1].col = piece.blocks[3].col - 1; piece.blocks[1].row = piece.blocks[3].row + 1;
-                    piece.blocks[2].col = piece.blocks[3].col; piece.blocks[2].row = piece.blocks[3].row - 1;
-                    piece.phase = 1;
-                }
-                else {
-                    piece.blocks[0].col = piece.blocks[3].col; piece.blocks[0].row = piece.blocks[3].row + 1;
-                    piece.blocks[1].col = piece.blocks[3].col + 1; piece.blocks[1].row = piece.blocks[3].row + 1;
-                    piece.blocks[2].col = piece.blocks[3].col - 1; piece.blocks[2].row = piece.blocks[3].row;
-                    piece.phase = 0;
-                }
-                break;
-            case pieceType.s:  //Square piece
-                break;
-            case pieceType.l:  //L piece
-                if(piece.phase == 0) {
-                    piece.blocks[0].col = piece.blocks[1].col + 1; piece.blocks[0].row = piece.blocks[1].row;
-                    piece.blocks[2].col = piece.blocks[1].col - 1; piece.blocks[2].row = piece.blocks[1].row;
-                    piece.blocks[3].col = piece.blocks[1].col - 1; piece.blocks[3].row = piece.blocks[1].row - 1;
-                    piece.phase = 1;
-                }
-                else if(piece.phase == 1) {
-                    piece.blocks[0].col = piece.blocks[1].col; piece.blocks[0].row = piece.blocks[1].row - 1;
-                    piece.blocks[2].col = piece.blocks[1].col; piece.blocks[2].row = piece.blocks[1].row + 1;
-                    piece.blocks[3].col = piece.blocks[1].col - 1; piece.blocks[3].row = piece.blocks[1].row + 1;
-                    piece.phase = 2;
-                }
-                else if(piece.phase == 2) {
-                    piece.blocks[0].col = piece.blocks[1].col - 1; piece.blocks[0].row = piece.blocks[1].row;
-                    piece.blocks[2].col = piece.blocks[1].col + 1; piece.blocks[2].row = piece.blocks[1].row;
-                    piece.blocks[3].col = piece.blocks[1].col + 1; piece.blocks[3].row = piece.blocks[1].row + 1;
-                    piece.phase = 3;
-                }
-                else {
-                    piece.blocks[0].col = piece.blocks[1].col; piece.blocks[0].row = piece.blocks[1].row + 1;
-                    piece.blocks[2].col = piece.blocks[1].col; piece.blocks[2].row = piece.blocks[1].row - 1;
-                    piece.blocks[3].col = piece.blocks[1].col + 1; piece.blocks[3].row = piece.blocks[1].row - 1;
-                    piece.phase = 0;
-                }
-                break;
-            case pieceType.rl: //Reverse L piece
-                if(piece.phase == 0) {
-                    piece.blocks[0].col = piece.blocks[1].col + 1; piece.blocks[0].row = piece.blocks[1].row;
-                    piece.blocks[2].col = piece.blocks[1].col - 1; piece.blocks[2].row = piece.blocks[1].row;
-                    piece.blocks[3].col = piece.blocks[1].col - 1; piece.blocks[3].row = piece.blocks[1].row + 1;
-                    piece.phase = 1;
-                }
-                else if(piece.phase == 1) {
-                    piece.blocks[0].col = piece.blocks[1].col; piece.blocks[0].row = piece.blocks[1].row - 1;
-                    piece.blocks[2].col = piece.blocks[1].col; piece.blocks[2].row = piece.blocks[1].row + 1;
-                    piece.blocks[3].col = piece.blocks[1].col + 1; piece.blocks[3].row = piece.blocks[1].row + 1;
-                    piece.phase = 2;
-                }
-                else if(piece.phase == 2) {
-                    piece.blocks[0].col = piece.blocks[1].col - 1; piece.blocks[0].row = piece.blocks[1].row;
-                    piece.blocks[2].col = piece.blocks[1].col + 1; piece.blocks[2].row = piece.blocks[1].row;
-                    piece.blocks[3].col = piece.blocks[1].col + 1; piece.blocks[3].row = piece.blocks[1].row - 1;
-                    piece.phase = 3;
-                }
-                else {
-                    piece.blocks[0].col = piece.blocks[1].col; piece.blocks[0].row = piece.blocks[1].row + 1;
-                    piece.blocks[2].col = piece.blocks[1].col; piece.blocks[2].row = piece.blocks[1].row - 1;
-                    piece.blocks[3].col = piece.blocks[1].col - 1; piece.blocks[3].row = piece.blocks[1].row - 1;
-                    piece.phase = 0;
-                }
-                break;
-            case pieceType.r:  //Right angle piece
-                if(piece.phase == 0) {
-                    piece.blocks[0].col = piece.blocks[2].col + 1; piece.blocks[0].row = piece.blocks[2].row;
-                    piece.blocks[1].col = piece.blocks[2].col; piece.blocks[1].row = piece.blocks[2].row + 1;
-                    piece.blocks[3].col = piece.blocks[2].col; piece.blocks[3].row = piece.blocks[2].row - 1;
-                    piece.phase = 1;
-                }
-                else if(piece.phase == 1) {
-                    piece.blocks[0].col = piece.blocks[2].col; piece.blocks[0].row = piece.blocks[2].row - 1;
-                    piece.blocks[1].col = piece.blocks[2].col + 1; piece.blocks[1].row = piece.blocks[2].row;
-                    piece.blocks[3].col = piece.blocks[2].col - 1; piece.blocks[3].row = piece.blocks[2].row;
-                    piece.phase = 2;
-                }
-                else if(piece.phase == 2) {
-                    piece.blocks[0].col = piece.blocks[2].col - 1; piece.blocks[0].row = piece.blocks[2].row;
-                    piece.blocks[1].col = piece.blocks[2].col; piece.blocks[1].row = piece.blocks[2].row - 1;
-                    piece.blocks[3].col = piece.blocks[2].col; piece.blocks[3].row = piece.blocks[2].row + 1;
-                    piece.phase = 3;
-                }
-                else {
-                    piece.blocks[0].col = piece.blocks[2].col; piece.blocks[0].row = piece.blocks[2].row + 1;
-                    piece.blocks[1].col = piece.blocks[2].col - 1; piece.blocks[1].row = piece.blocks[2].row;
-                    piece.blocks[3].col = piece.blocks[2].col + 1; piece.blocks[3].row = piece.blocks[2].row;
-                    piece.phase = 0;
-                }
-        }
-        return piece;
     }
 });
 
@@ -572,7 +333,7 @@ var PlayArea = React.createClass({
                 <PlayAreaBlocks blocks={this.props.blocks} mode={this.props.mode}/>
                 {
                     this.props.piece ? 
-                    <Piece key={this.props.piece.count} piece={this.props.piece} /> : 
+                    <PieceView key={this.props.piece.count} piece={this.props.piece} /> : 
                     null
                 }
                 <PlayAreaBorder />
@@ -660,7 +421,7 @@ var NextPieceArea = React.createClass({
 /**
  * @prop piece object {type: integer, blocks: array<block>}
  */
-var Piece = React.createClass({
+var PieceView = React.createClass({
     getInitialState: function() {
         return {piece: this.props.piece};
     },
