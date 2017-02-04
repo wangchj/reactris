@@ -95,7 +95,19 @@ function Piece(type) {
 }
 
 Piece.prototype = {
-	rotate: function() {
+    /**
+     * Move this piece by the amount specified by offset.
+     * Parameter offset is an object with the following two properties:
+     *   rows: integer
+     *   cols: integer
+     */
+	translate: function(offset) {
+        for (var i = 0; i < this.blocks.length; i++) {
+            this.blocks[i].row += offset.rows ? offset.rows : 0;
+            this.blocks[i].col += offset.cols ? offset.cols : 0;
+        }
+    },
+    rotate: function() {
         switch(this.type) {
             case Piece.Type.st: //Straight piece
                 if(this.phase == 0) { // Phase 0: horizontal

@@ -13,12 +13,12 @@ var Game = React.createClass({
         this.paused = false;
 
         return {
-            blocks: this.initField(),
+            field: new Field(gridWidth, gridHeight),
             piece: this.makeIntoPlayPiece(new Piece()),
             next: new Piece(),
             delay: 500,
             score: 0,
-            mode: 0
+            state: PlayerState.normal
         };
     },
     componentDidMount: function() {
@@ -32,7 +32,7 @@ var Game = React.createClass({
         for(var i = 0; i < piece.blocks.length; i++) {
             if(piece.blocks[i].row == 0 || 
                 (piece.blocks[i].row < gridHeight && 
-                this.state.blocks[piece.blocks[i].row - 1][piece.blocks[i].col] != null))
+                this.state.field.blocks[piece.blocks[i].row - 1][piece.blocks[i].col] != null))
             {
                 put = true;
                 break;
@@ -45,89 +45,48 @@ var Game = React.createClass({
             this.lowerPiece();
     },
     blinkExpire: function() {
-        var mode = this.state.mode;
-        var blinkCount = mode[1];
-        var completeRows = mode[2];
+        var state = this.state.state;
+        var blinkCount = state[1];
+        var completeRows = state[2];
 
         if (blinkCount >= blinkLimit) {
             clearInterval(this.blinkTimer);
 
             // TODO: update score
 
-            this.clearCompleteRows();
+            this.state.field.clearCompleteRows();
 
             this.setState({
-                blocks: this.state.blocks,
+                field: this.state.field,
                 piece: this.makeIntoPlayPiece(this.state.next),
                 next: new Piece(),
-                mode: 0
+                state: PlayerState.normal
             });
             
             this.timer = setInterval(this.delayExpire, this.state.delay);
         }
         else {
-            this.setState({mode:[1, blinkCount + 1, completeRows]})
+            this.setState({state:[PlayerState.cancel, blinkCount + 1, completeRows]})
         }
-    },
-    clearCompleteRows: function() {
-        var completeRows = this.state.mode[2];
-        if (completeRows.length == 0)
-            return;
-
-        var stackHeight = this.getStackHeight();
-
-        var shiftCount = 0;
-
-        for (var row = 0; row < stackHeight; row++) {
-            if (shiftCount < completeRows.length && completeRows[shiftCount] == row)
-                shiftCount++;
-            else if (shiftCount != 0) {
-                for (var col = 0; col < gridWidth; col++)
-                    this.state.blocks[row - shiftCount][col] = this.state.blocks[row][col];
-            }
-
-            if (row >= stackHeight - completeRows.length) {
-                for (var col = 0; col < gridWidth; col++)
-                    this.state.blocks[row][col] = null;
-            }
-        }
-
-        //this.setState({blocks:this.state.blocks});
-
-    },
-    getStackHeight: function() {
-        var result = 0;
-        var blocks = this.state.blocks;
-
-        for (var row = 0; row < gridHeight; row++) {
-            for (var col = 0; col < gridWidth; col++) {
-                if (blocks[row][col] != null) {
-                    result++;
-                    break;
-                }
-            }
-        }
-        return result;
     },
     lowerPiece: function() {
-        var piece = this.state.piece;
-        for(var i = 0; i < piece.blocks.length; i++)
-            piece.blocks[i].row--;
-        this.setState({piece: piece});
+        this.state.piece.translate({rows: -1});
+        this.setState({piece: this.state.piece});
         //this.timer = setInterval(this.delayExpire, this.state.delay); 
     },
     putPiece: function() {
         clearInterval(this.timer);
 
-        this.mergePiece();
-            
-        completeRows = this.getCompleteRows(); 
+        this.state.field.putPiece(this.state.piece);
+        this.setState({field: this.state.field});
+
+        var completeRows = this.state.field.getCompleteRows(); 
 
         if(completeRows.length > 0) {
-            mode = [1, 0, completeRows]; //1 for elimination mode
+            state = [PlayerState.cancel, 0, completeRows];
             this.setState({
                 piece: null,
-                mode: mode,
+                state: state,
                 score: this.state.score + completeRows.length
             });
             this.blinkTimer = setInterval(this.blinkExpire, blinkDelay);
@@ -137,50 +96,13 @@ var Game = React.createClass({
             this.timer = setInterval(this.delayExpire, this.state.delay);
         }
     },
-    mergePiece: function() {
-        var piece = this.state.piece;
-        var blocks = this.state.blocks;
-        for(var i = 0; i < piece.blocks.length; i++) {
-            var b = piece.blocks[i];
-            blocks[b.row][b.col] = true;
-        }
-        this.setState({blocks: blocks});
-    },
     changePiece: function() {
         this.setState({piece: this.makeIntoPlayPiece(this.state.next), next: new Piece()})
-    },
-    initField: function() {
-        var rows = [];
-        for(var row = 0; row < gridHeight; row++) {
-            var cols = [];
-            for(var col = 0; col < gridWidth; col++) {
-                cols.push(null);
-            }
-            rows.push(cols);
-        }
-        return rows;
-    },
-    getCompleteRows: function() {
-        var res = [];
-
-        for(var row = 0; row < gridHeight; row++) {
-            var addRow = true;
-            for(var col = 0; col < gridWidth; col++) {
-                if(this.state.blocks[row][col] == null) {
-                    addRow = false;
-                    break;
-                }
-            }
-
-            if(addRow) res.push(row);
-        }
-
-        return res;
     },
     render: function(){
         return (
             <svg width="300" height="450">
-                <PlayArea blocks={this.state.blocks} piece={this.state.piece} mode={this.state.mode}/>
+                <PlayArea field={this.state.field} piece={this.state.piece} state={this.state.state}/>
             </svg>
         );
     },
@@ -193,7 +115,7 @@ var Game = React.createClass({
     },
     colHeight: function(colNum) {
         for(var i = gridHeight; i > 0; i--) {
-            if(this.state.blocks[i - 1][colNum] != null)
+            if(this.state.field.blocks[i - 1][colNum] != null)
                 return i;
         }
         return 0;
@@ -223,7 +145,7 @@ var Game = React.createClass({
     },
     left: function() {
         var move = true;
-        var blocks = this.state.blocks;
+        var blocks = this.state.field.blocks;
         var piece = this.state.piece;
 
         for(var i = 0; i < piece.blocks.length; i++) {
@@ -241,7 +163,7 @@ var Game = React.createClass({
     },
     right: function() {
         var move = true;
-        var blocks = this.state.blocks;
+        var blocks = this.state.field.blocks;
         var piece = this.state.piece;
 
         for(var i = 0; i < piece.blocks.length; i++) {
@@ -258,7 +180,7 @@ var Game = React.createClass({
         }
     },
     down: function() {
-        var blocks = this.state.blocks;
+        var blocks = this.state.field.blocks;
         var piece = this.state.piece;
         
         for(var i = 0; i < piece.blocks.length; i++) {
@@ -271,7 +193,7 @@ var Game = React.createClass({
         this.lowerPiece();
     },
     drop: function() {
-        var blocks = this.state.blocks;
+        var blocks = this.state.field.blocks;
         var piece = this.state.piece;
         var min = gridHeight + 1;
         for(var i = 0; i < piece.blocks.length; i++) {
@@ -288,7 +210,7 @@ var Game = React.createClass({
         this.putPiece();
     },
     doRot: function() {
-        var blocks = this.state.blocks;
+        var blocks = this.state.field.blocks;
         var piece = this.state.piece;
         var copy = piece.copy();
         var canRot = true;
@@ -323,14 +245,15 @@ var Background = React.createClass({
 });
 
 /**
- * @prop blocks array<block>
- * @prop piece  object
+ * @prop field object
+ * @prop piece object
+ * @prop state string
  */
 var PlayArea = React.createClass({
     render: function() {
         return (
             <g>
-                <PlayAreaBlocks blocks={this.props.blocks} mode={this.props.mode}/>
+                <PlayAreaBlocks field={this.props.field} state={this.props.state}/>
                 {
                     this.props.piece ? 
                     <PieceView key={this.props.piece.count} piece={this.props.piece} /> : 
@@ -367,7 +290,8 @@ var PlayAreaBorder = React.createClass({
 });
 
 /**
- * @prop blocks
+ * @prop field
+ * @prop state
  */
 var PlayAreaBlocks = React.createClass({
     render: function() {
@@ -376,21 +300,21 @@ var PlayAreaBlocks = React.createClass({
     },
     makeBlocksToRender: function() {
         var blocks = [];
-        var mode = this.props.mode;
+        var state = this.props.state;
 
         for(var row = 0; row < gridHeight; row++) {
             for(var col = 0; col < gridWidth; col++) {
-                if(this.props.blocks[row][col] != null) {
+                if(this.props.field.blocks[row][col] != null) {
                     
-                    // If mode is falling mode
-                    if (mode === 0)
+                    // If state is falling state
+                    if (state === PlayerState.normal)
                         blocks.push(
                             <Block key={row + ' ' + col} row={row} col={col} />
                         );
-                    // Else, the mode is caneling mode
+                    // Else, the state is canceling state
                     else {
-                        var blinkCount = mode[1]
-                        var completeRows = mode[2];
+                        var blinkCount = state[1]
+                        var completeRows = state[2];
 
                         // If blink count is {1, 3, 5, ...} or row is not completed
                         // show the row. Else hide the row.
