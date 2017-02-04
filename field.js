@@ -2,16 +2,16 @@
  * A grid of accumulated square blocks of the game.
  */
 function Field(width, height) {
-	this.width = width;   // The width of the grid
-	this.height = height; // The hight of the brid
-	this.blocks = [];     // A grid of squre blocks
+    this.width = width;   // The width of the grid
+    this.height = height; // The hight of the brid
+    this.blocks = [];     // A grid of squre blocks
 
-	for (var row = 0; row < height; row++) {
-		var cols = [];
-		for (var col = 0; col < width; col++)
-			cols.push(null);
-		this.blocks.push(cols);
-	}
+    for (var row = 0; row < height; row++) {
+	   var cols = [];
+	   for (var col = 0; col < width; col++)
+	   cols.push(null);
+	   this.blocks.push(cols);
+    }
 }
 
 Field.prototype = {
