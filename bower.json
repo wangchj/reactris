@@ -1,0 +1,22 @@
+{
+  "name": "tetres",
+  "description": "A tetris game written in React.",
+  "main": "game.js",
+  "authors": [
+    "Jeff Wang"
+  ],
+  "license": "ISC",
+  "keywords": [
+    "game",
+    "tetris",
+    "React",
+    "ReactJS"
+  ],
+  "homepage": "https://github.com/wangchj/tetres",
+  "private": true,
+  "dependencies": {
+    "react": "0.13",
+    "jquery": "2.2",
+    "bootstrap": "3"
+  }
+}

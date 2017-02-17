@@ -91,5 +91,15 @@ Field.prototype = {
             }
         }
         return result;
-    }
+    },
+    /**
+     * Returns the height of the column specified by colIndex.
+     */
+    colHeight: function(colIndex) {
+        for(var i = this.height; i > 0; i--) {
+            if(this.blocks[i - 1][colIndex] != null)
+                return i;
+        }
+        return 0;
+    },
 }
