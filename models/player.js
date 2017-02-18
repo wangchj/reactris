@@ -103,6 +103,9 @@ Player.prototype = {
                 blinkCount: 0,
                 completeRows:completeRows
             };
+
+            this.update();
+
             this.piece = null;
             this.score = this.score + completeRows.length;
             this.blinkTimer = setInterval(this.blinkExpire.bind(this), blinkDelay);
