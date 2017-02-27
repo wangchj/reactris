@@ -1,0 +1,4 @@
+@font-face {
+  font-family: 'GameOver';
+  src: url('font/game-over.woff') format('woff'), url('font/game-over.ttf')  format('truetype');
+}

@@ -10,10 +10,10 @@ var PlayArea = React.createClass({
                 <PlayAreaBlocks field={this.props.field} state={this.props.state}/>
                 {
                     this.props.piece ? 
-                    <PieceView key={this.props.piece.count} piece={this.props.piece} /> : 
+                    <CurrentPiece key={this.props.piece.count} piece={this.props.piece} field={this.props.field}/> : 
                     null
                 }
-                <PlayAreaBorder />
+                <PlayAreaBorder/>
             </g>
         );
     }
@@ -56,26 +56,24 @@ var PlayAreaBlocks = React.createClass({
         var blocks = [];
         var state = this.props.state;
 
-        for(var row = 0; row < gridHeight; row++) {
-            for(var col = 0; col < gridWidth; col++) {
+        for(var row = 0; row < this.props.field.height; row++) {
+            for(var col = 0; col < this.props.field.width; col++) {
                 if(this.props.field.blocks[row][col] != null) {
-                    
-                    // If state is falling state
-                    if (state.id === PlayerState.normal)
-                        blocks.push(
-                            <BlockView key={row + ' ' + col} row={row} col={col} />
-                        );
-                    // Else, the state is canceling state
-                    else {
-                        var blinkCount = state.blinkCount;
-                        var completeRows = state.completeRows;
+                    switch (state.id) {
+                        case PlayerState.normal:
 
-                        // If blink count is {1, 3, 5, ...} or row is not completed
-                        // show the row. Else hide the row.
-                        if (blinkCount % 2 != 0 || !completeRows.includes(row))
-                            blocks.push(
-                                <BlockView key={row + ' ' + col} row={row} col={col} />
-                            );
+                        case PlayerState.end:
+                            blocks.push(<PlayBlock key={row + ' ' + col} row={row} col={col}/>);
+                            break;
+                        
+                        case PlayerState.cancel:
+                            var blinkCount = state.blinkCount;
+                            var completeRows = state.completeRows;
+
+                            // If blink count is {1, 3, 5, ...} or row is not completed
+                            // show the row. Else hide the row.
+                            if (blinkCount % 2 != 0 || !completeRows.includes(row))
+                                blocks.push(<PlayBlock key={row + ' ' + col} row={row} col={col}/>);
                     }
                 }
             }

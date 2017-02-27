@@ -3,7 +3,7 @@
  */
 function Field(width, height) {
     this.width = width;   // The width of the grid
-    this.height = height; // The hight of the brid
+    this.height = height; // The hight of the grid
     this.blocks = [];     // A grid of squre blocks
 
     for (var row = 0; row < height; row++) {
@@ -21,7 +21,8 @@ Field.prototype = {
     putPiece: function(piece) {
         for (var i = 0; i < piece.blocks.length; i++) {
             var block = piece.blocks[i];
-            this.blocks[block.row][block.col] = true;
+            if (block.row < this.height)
+                this.blocks[block.row][block.col] = true;
         }
     },
     /**

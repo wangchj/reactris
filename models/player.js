@@ -28,11 +28,9 @@ Player.prototype = {
         var piece = this.piece;
         var put = false;
 
-        // TODO: check the end of the game
-
         for (var i = 0; i < piece.blocks.length; i++) {
             if (piece.blocks[i].row == 0 || 
-                (piece.blocks[i].row < this.field.height && 
+                (piece.blocks[i].row <= this.field.height && 
                 this.field.blocks[piece.blocks[i].row - 1][piece.blocks[i].col] != null))
             {
                 put = true;
@@ -111,9 +109,30 @@ Player.prototype = {
             this.blinkTimer = setInterval(this.blinkExpire.bind(this), blinkDelay);
         }
         else {
-            this.changePiece();
-            this.timer = setInterval(this.onDelayExpire.bind(this), this.delay);
+
+            // Check for end of game
+            if (this.justDied()) {
+                this.state.id = PlayerState.end;
+                this.update();
+            }
+            else {
+                this.changePiece();
+                this.timer = setInterval(this.onDelayExpire.bind(this), this.delay);
+            }
         }
+    },
+    /**
+     * Check if the game has just ended. This method is meant to be called after each
+     * put piece. This method only checks the location of the previous piece (the piece just put).
+     * @return true if dead; false otherwise
+     */
+    justDied: function() {
+        for (var i = 0; i < this.piece.blocks.length; i++) {
+            var block = this.piece.blocks[i];
+            if (block.row >= this.field.height)
+                return true;
+        }
+        return false;
     },
     /**
      * Assign the next piece to be the current piece.
