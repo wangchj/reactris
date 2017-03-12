@@ -1,7 +1,7 @@
 var Game = React.createClass({
-	propTypes: {
-    	model: React.PropTypes.object.isRequired
-  	},
+    propTypes: {
+        model: React.PropTypes.object.isRequired
+    },
     render: function(){
         return (
             <svg width="350" height="450">

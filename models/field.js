@@ -7,10 +7,10 @@ function Field(width, height) {
     this.blocks = [];     // A grid of squre blocks
 
     for (var row = 0; row < height; row++) {
-	   var cols = [];
-	   for (var col = 0; col < width; col++)
-	   cols.push(null);
-	   this.blocks.push(cols);
+       var cols = [];
+       for (var col = 0; col < width; col++)
+       cols.push(null);
+       this.blocks.push(cols);
     }
 }
 
@@ -55,10 +55,10 @@ Field.prototype = {
             }
         }
     },
-	/**
-	 * Gets an array of indexes of complete rows.
-	 */
-	getCompleteRows: function() {
+    /**
+     * Gets an array of indexes of complete rows.
+     */
+    getCompleteRows: function() {
         var res = [];
 
         for(var row = 0; row < this.height; row++) {
@@ -71,7 +71,7 @@ Field.prototype = {
             }
 
             if(addRow)
-            	res.push(row);
+                res.push(row);
         }
 
         return res;

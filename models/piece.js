@@ -1,5 +1,5 @@
 Piece.Type = {
-	st: 0, z:1, rz:2, s:3, l:4, rl:5, r:6
+    st: 0, z:1, rz:2, s:3, l:4, rl:5, r:6
 };
 
 // A unique id for each piece
@@ -9,10 +9,10 @@ Piece.counter = 0;
  * Constructor for Piece. A piece is a shape, e.g. L shape, is a collection of square blocks.
  */
 function Piece(type) {
-	if (type === undefined)
-		type = Math.floor(Math.random() * 7);
+    if (type === undefined)
+        type = Math.floor(Math.random() * 7);
 
-	Piece.counter++;
+    Piece.counter++;
 
     switch(type) {
         case Piece.Type.st: //Straight piece
@@ -101,7 +101,7 @@ Piece.prototype = {
      *   rows: integer
      *   cols: integer
      */
-	translate: function(offset) {
+    translate: function(offset) {
         for (var i = 0; i < this.blocks.length; i++) {
             this.blocks[i].row += offset.rows ? offset.rows : 0;
             this.blocks[i].col += offset.cols ? offset.cols : 0;
@@ -236,7 +236,7 @@ Piece.prototype = {
      * Returns a copy of this piece.
      */
     copy: function() {
-    	var copy = new Piece();
+        var copy = new Piece();
         var blocks = [];
 
         for(var i = 0; i < this.blocks.length; i++) {
