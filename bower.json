@@ -17,6 +17,7 @@
   "dependencies": {
     "react": "0.13",
     "jquery": "2.2",
-    "bootstrap": "3"
+    "bootstrap": "3",
+    "socket.io-client": "^1.7.2"
   }
 }
