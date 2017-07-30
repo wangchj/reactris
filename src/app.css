@@ -1,0 +1,37 @@
+@font-face {
+  font-family: 'GameOver';
+  src: url('font/game-over.woff') format('woff'), url('font/game-over.ttf')  format('truetype');
+}
+
+html, body {
+  height: 100%;
+  background-color: #272822;
+}
+
+.vert-center {
+  /*text-align:center;*/
+  position:relative;
+  top:50%;
+  transform:translateY(-50%);
+  -webkit-transform:translateY(-50%);
+  -ms-transform:translateY(-50%);
+}
+
+.hor-center {
+  text-align: center;
+}
+
+.menu-table {
+  margin: 0px auto;
+  font-family: "GameOver";
+  font-size: 28px;
+}
+
+.menu-table td {
+  padding-left: 15px;
+}
+
+.play-field {
+  border: 1px solid #464741;
+  background-color: #272822;
+}
