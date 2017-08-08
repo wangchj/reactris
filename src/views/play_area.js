@@ -8,7 +8,6 @@ var PlayArea = React.createClass({
   render: function() {
     return (
       <g className="play-field">
-        <PlayAreaBackground/>
         <PlayAreaBlocks field={this.props.field} state={this.props.state}/>
         {
           this.props.piece ? 
@@ -16,38 +15,6 @@ var PlayArea = React.createClass({
           null
         }
         <PlayAreaBorder/>
-      </g>
-    );
-  }
-});
-
-var PlayAreaBackground = React.createClass({
-  render: function() {
-    var playAreaXOffset = Constants.playAreaXOffset;
-    var playAreaYOffset = Constants.playAreaYOffset;
-    var gridWidth = Constants.gridWidth;
-    var gridHeight = Constants.gridHeight;
-    var blockWidth = Constants.blockWidth;
-    return (
-      <g>
-        <defs>
-          <filter id="sofGlow">
-            <feMorphology radius="2" in="SourceAlpha" />
-            <feGaussianBlur stdDeviation="8" result="blurred" />
-            <feFlood flood-color="rgb(0,0,0)" result="glowColor" />
-            <feComposite in="glowColor" in2="blurred" operator="in" result="softGlow_colored" />
-            <feMerge>
-              <feMergeNode in="softGlow_colored"/>
-              <feMergeNode in="SourceGraphic"/>
-            </feMerge>
-          </filter>
-        </defs>
-        <rect width={blockWidth * 10} height={blockWidth * 20} 
-          x={playAreaXOffset} 
-          y={playAreaYOffset}
-          fill="#272822"
-          filter="url(#sofGlow)"
-        />
       </g>
     );
   }

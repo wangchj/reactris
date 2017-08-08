@@ -8,8 +8,10 @@ export default {
 
   // View constants
   blockWidth:      20,
-  playAreaXOffset: 20,
-  playAreaYOffset: 20,
+  playAreaXOffset: 0,
+  playAreaYOffset: 0,
+  playAreaWidth:   200,
+  playAreaHeight:  400,
 
   bgColorHtmlCode: "#272822",
 }
