@@ -1,5 +1,4 @@
 import Constants from '../constants.js';
-import GameOver from './game_over.js';
 import NextPieceArea from './next_piece_area.js';
 import PlayArea from './play_area.js';
 import PlayerState from '../models/player_state.js';
