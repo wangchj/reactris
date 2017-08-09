@@ -8,15 +8,18 @@ import React from 'react';
 var SinglePlayerGame = React.createClass({
   propTypes: {
     player: React.PropTypes.object.isRequired // player model object
-  }
+  },
   render: function(){
     var player = this.props.player;
     return (
-      <svg width={Constants.playAreaWidth} height={Constants.playAreaHeight}>
-        <PlayArea field={player.field} piece={player.piece} state={player.state}/>
-        <NextPieceArea piece={player.next}/>
-        {player.state.id == PlayerState.end ? <GameOver player={player}/> : null} 
-      </svg>
+      <div className="player">
+        <div className="field">
+          <PlayArea field={player.field} piece={player.piece} state={player.state}/>
+        </div>
+        <div className="next">
+          <NextPieceArea piece={player.next}/>
+        </div>
+      </div>
     );
   }
 });

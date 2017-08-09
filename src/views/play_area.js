@@ -7,15 +7,24 @@ import React from 'react';
 var PlayArea = React.createClass({
   render: function() {
     return (
-      <g className="play-field">
-        <PlayAreaBlocks field={this.props.field} state={this.props.state}/>
-        {
-          this.props.piece ? 
-          <CurrentPiece key={this.props.piece.count} piece={this.props.piece} field={this.props.field}/> : 
-          null
+      <div>
+        <svg width={Constants.playAreaWidth} height={Constants.playAreaHeight}>
+          <g>
+            <PlayAreaBlocks field={this.props.field} state={this.props.state}/>
+            {
+              this.props.piece ?
+              <CurrentPiece key={this.props.piece.count} piece={this.props.piece} field={this.props.field}/> :
+              null
+            }
+            <PlayAreaBorder/>
+          </g>
+        </svg>
+        {this.props.state.id === PlayerState.end ?
+          <div className="pin">
+            <div className="end">Game Over</div>
+          </div> : null
         }
-        <PlayAreaBorder/>
-      </g>
+      </div>
     );
   }
 });

@@ -1,14 +1,16 @@
 import Constants from '../constants.js';
 import React from 'react';
 
-var blockWidth = Constants.blockWidth;
-var nextPieceAreaXOffset = blockWidth * 13; //pixels
-var nextPieceAreaYOffset = blockWidth * 2; //pixels
-var nextPieceAreaHeight  = 3;
+const blockWidth = Constants.blockWidth;
+const height  = 2; // The height of the next piece area, in number of blocks
 
 var NextPieceArea = React.createClass({
   render: function() {
-    return <NextPiece piece={this.props.piece}/>
+    return (
+      <svg width={100} height={150}>
+        <NextPiece piece={this.props.piece}/>
+      </svg>
+    );
   }
 });
 
@@ -21,12 +23,12 @@ var NextPiece = React.createClass({
     var colorHtmlCode = piece.color.toHtmlCode();
     var blocks = piece.blocks.map(function(block, index) {
       return <rect
-        width={blockWidth}
-        height={blockWidth} 
-        x={block.col * blockWidth + nextPieceAreaXOffset} 
-        y={(nextPieceAreaHeight - block.row - 1) * blockWidth + nextPieceAreaYOffset}
-        fill={colorHtmlCode}
-        stroke={Constants.bgColorHtmlCode}
+        width  = {blockWidth}
+        height = {blockWidth}
+        x = {block.col * blockWidth + blockWidth}
+        y = {(height - block.row - 1) * blockWidth}
+        fill = {colorHtmlCode}
+        stroke = {Constants.bgColorHtmlCode}
       />
     });
 
