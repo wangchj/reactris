@@ -3,6 +3,7 @@ import NextPieceArea from './next_piece_area.js';
 import PlayArea from './play_area.js';
 import PlayerState from '../models/player_state.js';
 import React from 'react';
+import Score from './score.js';
 
 var SinglePlayerGame = React.createClass({
   propTypes: {
@@ -15,8 +16,9 @@ var SinglePlayerGame = React.createClass({
         <div className="field">
           <PlayArea field={player.field} piece={player.piece} state={player.state}/>
         </div>
-        <div className="next">
+        <div className="sideline">
           <NextPieceArea piece={player.next}/>
+          <Score player={player}/>
         </div>
       </div>
     );

@@ -7,7 +7,7 @@ const height  = 2; // The height of the next piece area, in number of blocks
 var NextPieceArea = React.createClass({
   render: function() {
     return (
-      <svg width={100} height={150}>
+      <svg width={80} height={50}>
         <NextPiece piece={this.props.piece}/>
       </svg>
     );

@@ -104,7 +104,7 @@ SinglePlayerController.prototype = {
       blinkCount: 0,
       completeRows:completeRows
     };
-    this.player.score = this.score + completeRows.length;
+    this.player.score += completeRows.length;
     this.blinkTimer = setInterval(this.onBlinkExpired.bind(this), Constants.blinkDelay);
     this.update();
   },
