@@ -1,4 +1,5 @@
 import Constants from '../constants.js';
+import Level from './level.js';
 import NextPieceArea from './next_piece_area.js';
 import PlayArea from './play_area.js';
 import PlayerState from '../models/player_state.js';
@@ -19,6 +20,7 @@ var SinglePlayerGame = React.createClass({
         <div className="sideline">
           <NextPieceArea piece={player.next}/>
           <Score player={player}/>
+          <Level player={player}/>
         </div>
       </div>
     );

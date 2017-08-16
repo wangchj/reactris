@@ -33,23 +33,24 @@ html, body {
 }
 
 .player .sideline .score {
-  margin-top: 50px;
+  margin-top: 25px;
 }
 
-.player .sideline .score .header {
+.player .sideline .level {
+  margin-top: 25px;
+}
+
+.player .sideline .header {
   color: #75715d;
-  font-size: 20px;
   font-style: italic;
   font-variant: small-caps;
   font-weight: bold;
 }
 
-.player .sideline .score .value {
+.player .sideline .value {
   color: #f8f8f2;
-  font-size: 20px;
   font-style: italic;
   font-weight: bold;
-  text-align: right;
 }
 
 .pin {
