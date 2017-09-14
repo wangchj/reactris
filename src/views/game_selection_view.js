@@ -10,8 +10,8 @@ var GameSelectionView = React.createClass({
               <div className="form-group">
                 <label>Game Mode</label>
                 <select className="form-control" value={this.props.gameType} onChange={this.props.onGameTypeChange}>
-                  <option value="SinglePlayer">Single Player</option>
-                  <option value="Multiplayer">Multiplayer</option>
+                  <option value="1P">Single Player</option>
+                  <option value="2P">Multiplayer</option>
                 </select>
               </div>
               <button className="btn btn-default" onClick={this.props.onNextClick}>Go!</button>

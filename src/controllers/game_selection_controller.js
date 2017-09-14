@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom';
 import GameSelectionView from '../views/game_selection_view.js';
 
 function GameSelectionController() {
-  this.gameType = "SinglePlayer";
+  this.gameType = '1P';
   this.playerName;
 }
 
