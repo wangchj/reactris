@@ -6,13 +6,16 @@ module.exports = {
     path: path.resolve(__dirname, 'build'),
     filename: 'bundle.js'
   },
-  module : {
-    loaders : [
+  module: {
+    rules: [
       {
-        test : /\.jsx?/,
-        include : path.resolve(__dirname, 'src'),
-        loader : 'babel-loader'
+        test: /\.jsx?/,
+        exclude: /node_modules/,
+        loader: 'babel-loader'
       }
     ]
+  },
+  devServer: {
+    contentBase: path.join(__dirname, 'build')
   }
 };

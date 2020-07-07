@@ -12,17 +12,15 @@ var gridHeight = Constants.gridHeight;
  * @prop row integer
  * @prop col integer
  */
-var PlayBlock = React.createClass({
-  render: function() {
-    return (
-      <rect width={blockWidth} height={blockWidth} 
-        x={this.props.col * blockWidth + playAreaXOffset} 
-        y={(gridHeight - this.props.row - 1) * blockWidth + playAreaYOffset}
-        fill={this.props.colorHtmlCode}
-        stroke={Constants.bgColorHtmlCode}
-      />
-    )
-  }
-});
+function PlayBlock(props) {
+  return (
+    <rect width={blockWidth} height={blockWidth} 
+      x={props.col * blockWidth + playAreaXOffset} 
+      y={(gridHeight - props.row - 1) * blockWidth + playAreaYOffset}
+      fill={props.colorHtmlCode}
+      stroke={Constants.bgColorHtmlCode}
+    />
+  )
+}
 
 export default PlayBlock;

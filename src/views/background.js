@@ -1,7 +1,5 @@
 import React from 'react';
 
-var Background = React.createClass({
-  render: function() {}
-});
+function Background(props) {}
 
 export default Background;
