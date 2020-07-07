@@ -1,5 +1,5 @@
 {
-  "name": "tetres",
+  "name": "reactris",
   "version": "1.0.0",
   "description": "A tetris game written in React.",
   "main": "game.js",
@@ -11,14 +11,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/wangchj/tetres.git"
+    "url": "git+https://github.com/wangchj/reactris.git"
   },
   "author": "Jeff Wang",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/wangchj/tetres/issues"
+    "url": "https://github.com/wangchj/reactris/issues"
   },
-  "homepage": "https://github.com/wangchj/tetres#readme",
+  "homepage": "https://github.com/wangchj/reactris#readme",
   "devDependencies": {},
   "dependencies": {
     "@babel/core": "^7.10.4",
